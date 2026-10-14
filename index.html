@@ -1,0 +1,1062 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cafu's Room</title>
+<meta name="description" content="Cafu's projects as game cartridges in a cartoon treehouse. Pick one and Piko, a little handheld console, plugs it in.">
+<meta name="theme-color" content="#3a2416">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://cafu1107.github.io/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cafu1107.github.io/">
+<meta property="og:title" content="Cafu's Room">
+<meta property="og:description" content="Cafu's projects as game cartridges in a cartoon treehouse. Pick one and Piko, a little handheld console, plugs it in.">
+<meta property="og:image" content="https://cafu1107.github.io/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;800&family=Pixelify+Sans:wght@400..700&display=swap">
+<style>
+/* Layout: one illustrated room fills the screen; Piko sits on the floor, project cartridges
+   float around him, an RPG dialog box talks at the bottom and a paper card slides in per project. */
+:root {
+  --ink: #2b1a10;          /* the room's brown line work */
+  --wood: #3a2416;
+  --paper: #fff3d6;
+  --paper-2: #f6e2b8;
+  --lilac: #a9b3f5;        /* Piko's shell */
+  --muted-ink: #6b4a2f;
+  --text-on-wood: #f7e6c4;
+  --star: #ffd23f;
+  --font-display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  --font-pixel: "Pixelify Sans", "Courier New", ui-monospace, monospace;
+  --font-body: "Nunito", "Segoe UI", system-ui, sans-serif;
+  --sw: 100vw; --sh: 56.25vw; --sx: 0px; --sy: 0px;
+  --u: calc(var(--sh) / 100);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+html { background: var(--wood); }
+body {
+  margin: 0; overflow: hidden; background: var(--wood); color: var(--ink);
+  font: 400 16px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--star); outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- the room ---------- */
+.room { position: fixed; inset: 0; overflow: hidden; }
+.scene { position: absolute; left: var(--sx); top: var(--sy); width: var(--sw); height: var(--sh); }
+.scene__bg {
+  position: absolute; inset: 0; background: url("gorseller/oda.webp") center / 100% 100% no-repeat;
+  opacity: 0; transition: opacity .6s ease-out;
+}
+.scene.ready .scene__bg { opacity: 1; }
+.scene__glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 30% 26% at 50% 70%, rgba(255, 214, 140, .28), transparent 70%);
+}
+
+/* ---------- Piko ---------- */
+.piko:focus:not(:focus-visible) { outline: none; }
+.piko {
+  position: absolute; left: 50%; top: 48%; height: 30%; aspect-ratio: 220 / 300;
+  translate: -50% 0; overflow: visible; cursor: pointer; outline-offset: 6px; border-radius: 20px;
+}
+.piko__body { animation: breathe 3.2s ease-in-out infinite; transform-origin: 110px 288px; transform-box: view-box; }
+@keyframes breathe { 50% { transform: scaleY(.985) translateY(1px); } }
+.piko .eye { transform-box: fill-box; transform-origin: center; transition: transform .07s; }
+.piko.blink .eye { transform: scaleY(.12); }
+.piko .face { transition: transform .25s cubic-bezier(.3,.7,.3,1); }
+.piko .m-ooh, .piko .eyes-happy, .piko .m-happy, .piko .app { display: none; }
+.piko[data-face="ooh"] .m-idle { display: none; }
+.piko[data-face="ooh"] .m-ooh { display: inline; }
+.piko[data-face="happy"] .eyes-open, .piko[data-face="happy"] .m-idle { display: none; }
+.piko[data-face="happy"] .eyes-happy, .piko[data-face="happy"] .m-happy { display: inline; }
+.piko[data-app="on"] .face { display: none; }
+.piko[data-app="on"] .app { display: inline; }
+.piko .app__scan { animation: scan .7s steps(7) 1 both; }
+@keyframes scan { from { transform: translateY(0); } to { transform: translateY(80px); opacity: 0; } }
+.piko .app__content { animation: boot .45s steps(4) .15s both; }
+@keyframes boot { from { opacity: 0; } to { opacity: 1; } }
+#armR { transform-box: view-box; transform-origin: 198px 160px; }
+.piko.wave #armR { animation: wave .5s ease-in-out 3 alternate; }
+@keyframes wave { from { transform: rotate(0); } to { transform: rotate(-38deg); } }
+.piko.busy #led { animation: led .25s steps(2) infinite; }
+@keyframes led { 50% { fill: #fff6b0; } }
+
+/* ---------- cartridges ---------- */
+.carts { position: absolute; inset: 0; pointer-events: none; }
+.cart {
+  position: absolute; left: calc(var(--x) * 1%); top: calc(var(--y) * 1%);
+  width: calc(var(--u) * 8.2); height: calc(var(--u) * 9.8);
+  translate: -50% -50%; padding: 0; border: 0; background: none; cursor: pointer;
+  pointer-events: auto; border-radius: 10px;
+}
+.cart__float {
+  display: block; width: 100%; height: 100%;
+  rotate: var(--tilt, 0deg);
+  animation: bob 3.6s ease-in-out var(--d, 0s) infinite;
+  transition: scale .2s cubic-bezier(.3,.7,.3,1), rotate .2s, filter .2s, opacity .25s;
+}
+@keyframes bob { 50% { translate: 0 calc(var(--u) * -.9); } }
+.cart.is-sel .cart__float { scale: 1.12; rotate: 0deg; filter: drop-shadow(0 0 calc(var(--u) * 1.4) var(--c)); }
+.cart.is-out .cart__float { opacity: .3; filter: grayscale(1); animation-play-state: paused; }
+.cart__shell {
+  position: relative; display: block; width: 100%; height: 100%;
+  background: #5f5a78; border: 3px solid var(--ink);
+  border-radius: 7px 34% 7px 7px / 7px 20% 7px 7px;
+  box-shadow: inset -.45em -.45em 0 rgba(0, 0, 0, .2), inset .3em .3em 0 rgba(255, 255, 255, .12), .25em .35em 0 rgba(43, 26, 16, .35);
+  font-size: calc(var(--u) * 1);
+}
+.cart__grip {
+  position: absolute; left: 13%; right: 30%; top: 7%; height: 12%; border-radius: 3px;
+  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, .32) 0 2px, transparent 2px 5px);
+}
+.cart__label {
+  position: absolute; left: 10%; right: 10%; top: 25%; bottom: 9%;
+  background: var(--c); border: 2.5px solid var(--ink); border-radius: 6px; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .25em;
+  color: var(--on, var(--ink));
+}
+.cart__label::after {
+  content: ""; position: absolute; inset: -20% auto -20% -30%; width: 40%;
+  background: rgba(255, 255, 255, .28); transform: rotate(22deg);
+}
+.cart__mono { font: 400 3em/1 var(--font-display); letter-spacing: .02em; }
+.cart__name { font: 600 calc(var(--nf, 1.15) * 1em)/1.05 var(--font-pixel); text-align: center; padding: 0 .3em; }
+/* a gold star sticker on cartridges you have already played */
+.cart__seen {
+  position: absolute; right: -14%; top: -10%; width: 3.2em; height: 3.2em; display: none;
+  background: var(--star); border: 2.5px solid var(--ink); border-radius: 50%;
+  font: 400 1.9em/1 var(--font-display); color: var(--ink); place-items: center; rotate: 12deg;
+  font-size: 1em; line-height: 0;
+}
+.cart__seen::before { content: "★"; font-size: 2em; line-height: 1; }
+.cart.seen .cart__seen { display: grid; }
+
+.fly { z-index: 30; pointer-events: none; transform-origin: 0 0; margin: 0; }
+.fly .cart__float { animation: none; rotate: 0deg; scale: 1; filter: none; opacity: 1; }
+
+/* ---------- top bar ---------- */
+.top {
+  position: fixed; z-index: 20; left: 0; right: 0; top: 0;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 0;
+  pointer-events: none;
+}
+.top > * { pointer-events: auto; }
+.brand {
+  display: inline-flex; align-items: baseline; gap: 10px; cursor: pointer;
+  background: var(--paper); border: 3px solid var(--ink); border-radius: 14px;
+  padding: 6px 14px 8px; box-shadow: 4px 4px 0 var(--ink); rotate: -1.5deg;
+}
+.brand:hover { background: #fff9ea; }
+.brand:active { translate: 2px 2px; box-shadow: 2px 2px 0 var(--ink); }
+.brand b { font: 400 26px/1 var(--font-display); letter-spacing: .02em; }
+.brand span { font: 500 14px/1 var(--font-pixel); color: var(--muted-ink); }
+.tools { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+.chip, .seg {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px;
+  background: var(--paper); border: 3px solid var(--ink); border-radius: 12px; box-shadow: 3px 3px 0 var(--ink);
+  font: 600 14px/1 var(--font-pixel); color: var(--ink); text-decoration: none; padding: 0 12px; cursor: pointer;
+}
+.chip:hover { background: #fff9ea; }
+.chip:active { translate: 2px 2px; box-shadow: 1px 1px 0 var(--ink); }
+.chip svg { width: 18px; height: 18px; flex: none; }
+.seg { padding: 0; overflow: hidden; }
+.seg button { height: 100%; padding: 0 11px; border: 0; background: none; cursor: pointer; font: 600 14px/1 var(--font-pixel); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+/* ---------- dialog box ---------- */
+.dialog {
+  position: fixed; z-index: 20; left: 50%; translate: -50% 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  width: min(700px, calc(100% - 32px)); min-height: 112px;
+  background: rgba(30, 19, 12, .92); color: var(--text-on-wood);
+  border: 3px solid #f3d9a4; border-radius: 14px; box-shadow: 0 0 0 3px var(--ink), 6px 8px 0 3px rgba(20, 12, 7, .5);
+  padding: 20px 20px 12px;
+}
+.dialog__name {
+  position: absolute; top: -15px; left: 16px;
+  background: var(--lilac); color: var(--ink); border: 3px solid var(--ink); border-radius: 9px;
+  font: 700 13px/1 var(--font-pixel); letter-spacing: .12em; padding: 5px 10px 4px;
+}
+.dialog__text { margin: 0; min-height: 2.9em; font: 500 18px/1.45 var(--font-pixel); text-wrap: pretty; }
+.dialog__text .caret { display: inline-block; width: .55em; animation: caret .6s steps(2) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+.dialog__hint { margin: 8px 0 0; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font: 400 13px/1.3 var(--font-pixel); color: #c4a982; }
+.dialog__hint kbd { font: inherit; color: var(--text-on-wood); border: 1.5px solid #8a6a48; border-radius: 4px; padding: 0 4px; }
+.dialog__hint b { font-weight: 600; color: var(--star); }
+
+.credit {
+  position: fixed; z-index: 5; left: 18px; top: calc(env(safe-area-inset-top, 0px) + 66px); margin: 0;
+  font: 400 11px/1.3 var(--font-body); color: rgba(255, 238, 205, .8);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+}
+
+/* ---------- project card ---------- */
+.panel {
+  position: fixed; z-index: 25; right: 16px; top: 72px; max-height: calc(100% - 72px - var(--dlg-h, 130px) - 34px);
+  width: min(430px, calc(100% - 32px)); overflow: auto; overscroll-behavior: contain;
+  background: var(--paper); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 6px 6px 0 var(--ink);
+  padding: 10px 16px 18px; transform-origin: 85% 0;
+}
+.panel.is-open { animation: cardIn .32s cubic-bezier(.3,.7,.3,1) both; }
+@keyframes cardIn { from { opacity: 0; transform: translateY(14px) rotate(1.5deg) scale(.97); } }
+.panel__bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.panel__nav { display: flex; align-items: center; gap: 6px; font: 600 13px/1 var(--font-pixel); color: var(--muted-ink); font-variant-numeric: tabular-nums; }
+.iconbtn {
+  width: 34px; height: 34px; display: grid; place-items: center; padding: 0; cursor: pointer;
+  background: var(--paper-2); border: 2.5px solid var(--ink); border-radius: 10px; box-shadow: 2px 2px 0 var(--ink);
+  font: 700 17px/1 var(--font-pixel); color: var(--ink);
+}
+.iconbtn:active { translate: 1px 1px; box-shadow: 1px 1px 0 var(--ink); }
+.panel__shot {
+  position: relative; margin: 0; aspect-ratio: 16 / 10; border: 3px solid var(--ink); border-radius: 10px; overflow: hidden;
+  background: #1d1611;
+}
+.panel__shot img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+.panel__shot figcaption {
+  position: absolute; right: 8px; bottom: 8px; font: 500 11px/1 var(--font-pixel);
+  background: rgba(255, 243, 214, .92); border: 2px solid var(--ink); border-radius: 6px; padding: 4px 6px;
+}
+.panel__head { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; }
+.badge {
+  flex: none; width: 40px; height: 40px; border-radius: 10px; border: 3px solid var(--ink);
+  display: grid; place-items: center; font: 400 17px/1 var(--font-display); background: var(--c); color: var(--on, var(--ink));
+}
+.panel h2 { margin: 0; font: 400 30px/1 var(--font-display); letter-spacing: .01em; }
+.panel__tagline { margin: 0 0 10px; font: 500 15px/1.35 var(--font-pixel); color: var(--muted-ink); }
+.panel__desc { margin: 0 0 12px; font-size: 15.5px; line-height: 1.55; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; padding: 0; list-style: none; }
+.tags li { font: 600 12px/1 var(--font-pixel); background: var(--paper-2); border: 2px solid var(--ink); border-radius: 7px; padding: 5px 8px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 14px;
+  border: 3px solid var(--ink); border-radius: 12px; box-shadow: 3px 3px 0 var(--ink);
+  background: var(--paper-2); color: var(--ink); text-decoration: none; cursor: pointer;
+  font: 700 14px/1 var(--font-pixel);
+}
+.btn--main { background: var(--c); color: var(--on, var(--ink)); }
+.btn:hover { filter: brightness(1.05); }
+.btn:active { translate: 2px 2px; box-shadow: 1px 1px 0 var(--ink); }
+.btn kbd { font: inherit; font-size: 11px; opacity: .7; }
+
+/* mock screens for the Windows tools that have no website */
+.mock { position: absolute; inset: 0; display: grid; place-items: center; padding: 14px; font: 500 13px/1.5 var(--font-pixel); }
+.mock__win { width: 100%; max-width: 330px; background: #f4f1ff; border: 2.5px solid #241c3c; border-radius: 9px; overflow: hidden; color: #241c3c; }
+.mock__bar { background: #241c3c; color: #e9e4ff; padding: 5px 10px; font-weight: 700; }
+.mock__win ul { margin: 0; padding: 8px 12px; list-style: none; display: grid; gap: 3px; }
+.mock__win li::before { content: "✓ "; color: #2a9d5c; font-weight: 700; }
+.mock__go { margin: 4px 12px 12px; display: inline-block; background: #9b6bff; color: #fff; border-radius: 6px; padding: 4px 12px; font-weight: 700; }
+.mock__term { width: 100%; max-width: 360px; background: #0f1a14; color: #b6f5c8; border: 2.5px solid #000; border-radius: 9px; padding: 10px 12px; white-space: pre; overflow: hidden; font-size: 12.5px; }
+.mock__term b { color: #fff; font-weight: 600; }
+
+/* ---------- about + list sheets ---------- */
+.sheet {
+  width: min(560px, calc(100% - 24px)); max-height: calc(100% - 40px); padding: 0; overflow: auto;
+  background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 6px 6px 0 var(--ink);
+}
+.sheet[open] { animation: cardIn .28s cubic-bezier(.3,.7,.3,1) both; }
+.sheet::backdrop { background: rgba(24, 14, 8, .62); }
+.sheet__in { padding: 18px 20px 22px; }
+.sheet__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.sheet h2 { margin: 0; font: 400 32px/1.05 var(--font-display); text-wrap: balance; }
+.sheet p { margin: 10px 0 0; font-size: 16px; line-height: 1.6; }
+.sheet .lede { font-size: 17px; }
+.stack { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; padding: 0; list-style: none; }
+.stack li { font: 600 12px/1 var(--font-pixel); background: var(--paper-2); border: 2px solid var(--ink); border-radius: 7px; padding: 5px 8px; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0 0; }
+.facts div { background: var(--paper-2); border: 2.5px solid var(--ink); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.facts dt { font: 500 12px/1.2 var(--font-pixel); color: var(--muted-ink); }
+.facts dd { margin: 4px 0 0; font: 400 28px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.sheet .actions { margin-top: 18px; }
+.sheet .small { font-size: 13px; color: var(--muted-ink); }
+.plist { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.plist li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  border: 2.5px solid var(--ink); border-radius: 12px; padding: 8px 10px; background: #fff8e8;
+}
+.plist .badge { width: 36px; height: 36px; font-size: 15px; }
+.plist__name { display: block; font: 400 19px/1.1 var(--font-display); background: none; border: 0; padding: 0; text-align: left; cursor: pointer; color: var(--ink); }
+.plist__name:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.plist__tag { display: block; font-size: 13.5px; line-height: 1.35; color: var(--muted-ink); }
+.plist__links { display: flex; flex-wrap: wrap; gap: 6px; }
+.plist__links a { font: 600 12px/1 var(--font-pixel); color: var(--ink); text-decoration: none; border: 2px solid var(--ink); border-radius: 7px; padding: 6px 7px; background: var(--paper-2); white-space: nowrap; }
+.plist__links a:hover { background: #fff; }
+
+/* ---------- phones ---------- */
+.narrow .carts {
+  inset: auto 0 calc(var(--dlg-h, 130px) + env(safe-area-inset-bottom, 0px) + 26px) 0;
+  position: fixed; z-index: 15; display: flex; gap: 12px; overflow-x: auto; overscroll-behavior-x: contain;
+  padding: 14px 16px 10px; scroll-snap-type: x proximity; scrollbar-width: none;
+}
+.narrow .carts::-webkit-scrollbar { display: none; }
+.narrow .cart { position: relative; left: auto; top: auto; translate: none; flex: none; width: 66px; height: 79px; scroll-snap-align: center; }
+.narrow .cart__shell { font-size: 6.6px; }
+.narrow .scene::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 32%;
+  background: linear-gradient(transparent, var(--wood));
+}
+.narrow .credit, .narrow .gh-chip, .narrow .brand span, .narrow .chip__text { display: none; }
+.narrow .panel { inset: calc(env(safe-area-inset-top, 0px) + 10px) 10px calc(env(safe-area-inset-bottom, 0px) + 10px) 10px; width: auto; max-height: none; }
+.narrow .dialog__text { font-size: 16px; }
+.narrow .brand b { font-size: 22px; }
+.narrow .facts dd { font-size: 22px; }
+.narrow .plist li { grid-template-columns: auto minmax(0, 1fr); }
+.narrow .plist__links { grid-column: 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cart__float, .piko__body, .piko.wave #armR, .piko .app__scan, .dialog__text .caret { animation: none !important; }
+  .panel.is-open, .sheet[open] { animation: none; }
+  .scene__bg { transition: none; }
+}
+</style>
+
+<div class="room" id="room">
+  <div class="scene" id="scene">
+    <div class="scene__bg" id="sceneBg" role="img"></div>
+    <div class="scene__glow"></div>
+    <svg class="piko" id="piko" viewBox="0 0 220 300" data-face="idle" data-app="off" role="button" tabindex="0" aria-label="Piko">
+      <defs>
+        <clipPath id="lcdClip"><rect x="55" y="66" width="110" height="80" rx="9"/></clipPath>
+      </defs>
+      <ellipse cx="110" cy="289" rx="80" ry="9" fill="rgba(43,26,16,.35)"/>
+      <g class="piko__body">
+        <!-- legs -->
+        <path d="M80 244 L74 276" stroke="#2b1a10" stroke-width="15" stroke-linecap="round"/>
+        <path d="M80 244 L74 276" stroke="#8d97e4" stroke-width="8" stroke-linecap="round"/>
+        <path d="M144 244 L152 276" stroke="#2b1a10" stroke-width="15" stroke-linecap="round"/>
+        <path d="M144 244 L152 276" stroke="#8d97e4" stroke-width="8" stroke-linecap="round"/>
+        <ellipse cx="68" cy="280" rx="17" ry="8.5" fill="#7d87d4" stroke="#2b1a10" stroke-width="4"/>
+        <ellipse cx="158" cy="280" rx="17" ry="8.5" fill="#7d87d4" stroke="#2b1a10" stroke-width="4"/>
+        <!-- left arm -->
+        <path d="M34 158 C14 168 9 190 16 212" fill="none" stroke="#2b1a10" stroke-width="15" stroke-linecap="round"/>
+        <path d="M34 158 C14 168 9 190 16 212" fill="none" stroke="#8d97e4" stroke-width="8" stroke-linecap="round"/>
+        <circle cx="16" cy="214" r="8" fill="#a9b3f5" stroke="#2b1a10" stroke-width="4"/>
+        <!-- cartridge in the slot: drawn behind the shell so only its top shows -->
+        <g id="slotCart" opacity="0">
+          <path d="M72 96 V13 a7 7 0 0 1 7-7 H128 l20 18 V96 Z" fill="#5f5a78" stroke="#2b1a10" stroke-width="3.5" stroke-linejoin="round"/>
+          <g stroke="rgba(0,0,0,.32)" stroke-width="2"><path d="M84 11 v10 M89 11 v10 M94 11 v10 M99 11 v10 M104 11 v10 M109 11 v10 M114 11 v10 M119 11 v10"/></g>
+          <rect id="slotLabel" x="80" y="28" width="60" height="62" rx="6" fill="#ffd23f" stroke="#2b1a10" stroke-width="3"/>
+        </g>
+        <!-- antenna -->
+        <path d="M158 44 L172 14" stroke="#2b1a10" stroke-width="5" stroke-linecap="round"/>
+        <circle id="led" cx="173" cy="11" r="8" fill="#ff7a59" stroke="#2b1a10" stroke-width="3.5"/>
+        <!-- shell: side then front -->
+        <path d="M186 46 L202 56 V236 L186 246 Z" fill="#7d87d4" stroke="#2b1a10" stroke-width="5" stroke-linejoin="round"/>
+        <rect x="30" y="40" width="160" height="208" rx="24" fill="#a9b3f5" stroke="#2b1a10" stroke-width="5"/>
+        <path d="M42 70 V214" stroke="rgba(255,255,255,.45)" stroke-width="5" stroke-linecap="round"/>
+        <!-- slot -->
+        <rect x="66" y="35" width="88" height="10" rx="4" fill="#2a2240" stroke="#2b1a10" stroke-width="3"/>
+        <!-- screen -->
+        <rect x="45" y="57" width="130" height="98" rx="15" fill="#4b4f86" stroke="#2b1a10" stroke-width="4"/>
+        <rect x="55" y="66" width="110" height="80" rx="9" fill="#e2f1c6"/>
+        <g clip-path="url(#lcdClip)">
+          <g class="face" id="face">
+            <g class="eyes-open" fill="#26331f">
+              <rect class="eye" x="82" y="88" width="10" height="16" rx="5"/>
+              <rect class="eye" x="128" y="88" width="10" height="16" rx="5"/>
+            </g>
+            <g class="eyes-happy" fill="none" stroke="#26331f" stroke-width="4.5" stroke-linecap="round">
+              <path d="M80 100 q7 -10 14 0"/><path d="M126 100 q7 -10 14 0"/>
+            </g>
+            <ellipse cx="74" cy="114" rx="8" ry="4.5" fill="#ff9d86" opacity=".6"/>
+            <ellipse cx="146" cy="114" rx="8" ry="4.5" fill="#ff9d86" opacity=".6"/>
+            <path class="m-idle" d="M99 116 Q110 126 121 116" fill="none" stroke="#26331f" stroke-width="4.5" stroke-linecap="round"/>
+            <ellipse class="m-ooh" cx="110" cy="120" rx="6" ry="7.5" fill="#26331f"/>
+            <path class="m-happy" d="M96 113 Q110 132 124 113 Z" fill="#26331f" stroke="#26331f" stroke-width="3" stroke-linejoin="round"/>
+          </g>
+          <g class="app" id="app">
+            <g class="app__content">
+              <rect id="appBg" x="55" y="66" width="110" height="80" fill="#ffd23f"/>
+              <text id="appMono" x="110" y="112" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="34" fill="#2b1a10">PO</text>
+              <text id="appName" x="110" y="134" text-anchor="middle" font-family="Pixelify Sans, monospace" font-size="11" font-weight="600" fill="#2b1a10">Pota</text>
+            </g>
+            <rect class="app__scan" x="55" y="62" width="110" height="6" fill="rgba(255,255,255,.75)"/>
+          </g>
+          <path d="M60 72 H160" stroke="rgba(255,255,255,.35)" stroke-width="3" stroke-linecap="round"/>
+        </g>
+        <!-- controls -->
+        <circle cx="60" cy="168" r="3.5" fill="#7cf09a" stroke="#2b1a10" stroke-width="1.5"/>
+        <g fill="#33345c" stroke="#2b1a10" stroke-width="3" stroke-linejoin="round">
+          <rect x="56" y="189" width="46" height="15" rx="4"/>
+          <rect x="71.5" y="173.5" width="15" height="46" rx="4"/>
+        </g>
+        <rect x="73" y="191" width="12" height="11" fill="#33345c"/>
+        <circle cx="150" cy="202" r="12.5" fill="#ff7a59" stroke="#2b1a10" stroke-width="3.5"/>
+        <circle cx="173" cy="181" r="10" fill="#ffd23f" stroke="#2b1a10" stroke-width="3.5"/>
+        <g fill="#33345c" stroke="#2b1a10" stroke-width="2"><rect x="90" y="229" width="20" height="7" rx="3.5" transform="rotate(-18 100 232)"/><rect x="116" y="229" width="20" height="7" rx="3.5" transform="rotate(-18 126 232)"/></g>
+        <g stroke="#6c74c4" stroke-width="3.2" stroke-linecap="round"><path d="M152 238 l13 -13"/><path d="M160 241 l13 -13"/><path d="M168 244 l11 -11"/></g>
+        <!-- right arm (waves) -->
+        <g id="armR">
+          <path d="M198 160 C214 168 218 188 212 208" fill="none" stroke="#2b1a10" stroke-width="15" stroke-linecap="round"/>
+          <path d="M198 160 C214 168 218 188 212 208" fill="none" stroke="#8d97e4" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="212" cy="210" r="8" fill="#a9b3f5" stroke="#2b1a10" stroke-width="4"/>
+        </g>
+      </g>
+    </svg>
+    <div class="carts" id="carts"></div>
+  </div>
+</div>
+
+<header class="top">
+  <button type="button" class="brand" id="brand" aria-haspopup="dialog"><b>Cafu</b><span id="brandSub">projects</span></button>
+  <div class="tools">
+    <button type="button" class="chip" id="listBtn" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="3.4"/></svg>
+      <span class="chip__text" id="listText">List</span>
+    </button>
+    <div class="seg" role="group" aria-label="Dil / Language">
+      <button type="button" data-lang="tr" aria-pressed="false">TR</button>
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+    </div>
+    <button type="button" class="chip" id="mute" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path id="muteWaves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="muteX" d="M17 9l5 6M22 9l-5 6" style="display:none"/></svg>
+      <span class="sr" id="muteLabel">Sound</span>
+    </button>
+    <a class="chip gh-chip" href="https://github.com/Cafu1107" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+</header>
+
+<section class="dialog" id="dialog">
+  <span class="dialog__name">PİKO</span>
+  <p class="dialog__text" id="dlgText" aria-hidden="true"></p>
+  <p class="sr" id="dlgLive" aria-live="polite"></p>
+  <p class="dialog__hint"><span id="dlgHint"></span><span id="dlgSeen"></span></p>
+</section>
+
+<aside class="panel" id="panel" hidden aria-labelledby="pTitle">
+  <div class="panel__bar">
+    <div class="panel__nav">
+      <button type="button" class="iconbtn" id="pPrev">‹</button>
+      <span id="pCount">1 / 10</span>
+      <button type="button" class="iconbtn" id="pNext">›</button>
+    </div>
+    <button type="button" class="iconbtn" id="pClose">✕</button>
+  </div>
+  <figure class="panel__shot" id="pShot"></figure>
+  <div class="panel__head">
+    <span class="badge" id="pBadge" aria-hidden="true"></span>
+    <h2 id="pTitle" tabindex="-1"></h2>
+  </div>
+  <p class="panel__tagline" id="pTag"></p>
+  <p class="panel__desc" id="pDesc"></p>
+  <ul class="tags" id="pTags"></ul>
+  <div class="actions" id="pActions"></div>
+</aside>
+
+<dialog class="sheet" id="about" aria-labelledby="aTitle">
+  <div class="sheet__in">
+    <div class="sheet__top">
+      <h2 id="aTitle"></h2>
+      <form method="dialog"><button class="iconbtn" id="aClose" value="close">✕</button></form>
+    </div>
+    <p class="lede" id="aLede"></p>
+    <p id="aBody"></p>
+    <ul class="stack">
+      <li>TypeScript</li><li>React</li><li>JavaScript</li><li>C#</li><li>WPF</li><li>C++</li><li>Python</li><li>Arduino / ESP32</li>
+    </ul>
+    <dl class="facts">
+      <div><dt id="fProjects"></dt><dd>10</dd></div>
+      <div><dt id="fSites"></dt><dd>7</dd></div>
+      <div><dt id="fLangs"></dt><dd>3</dd></div>
+    </dl>
+    <div class="actions">
+      <a class="btn btn--main" style="--c:#a9b3f5" href="https://github.com/Cafu1107" target="_blank" rel="noopener">GitHub ↗</a>
+      <button type="button" class="btn" id="aList"></button>
+    </div>
+    <p class="small" id="aCredit"></p>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="list" aria-labelledby="lTitle">
+  <div class="sheet__in">
+    <div class="sheet__top">
+      <h2 id="lTitle"></h2>
+      <form method="dialog"><button class="iconbtn" id="lClose" value="close">✕</button></form>
+    </div>
+    <p id="lLede"></p>
+    <ul class="plist" id="plist"></ul>
+  </div>
+</dialog>
+
+<p class="credit" id="credit"></p>
+
+<noscript>
+  <div style="position:fixed;inset:0;z-index:50;overflow:auto;background:#fff3d6;color:#2b1a10;padding:24px;font:16px/1.6 system-ui,sans-serif">
+    <h1>Cafu's projects</h1>
+    <ul>
+      <li><a href="https://github.com/Cafu1107/kadraj">Kadraj</a>: turn your phone into a Windows webcam.</li>
+      <li><a href="https://github.com/Cafu1107/openglide">OpenGlide</a>: a browser control panel for gaming mice.</li>
+      <li><a href="https://github.com/Cafu1107/Wifi">Wifi</a>: show the Wi-Fi passwords saved on a Windows PC.</li>
+      <li><a href="https://github.com/Cafu1107/pota">Pota</a>: live basketball scores from 18 leagues.</li>
+      <li><a href="https://github.com/Cafu1107/skorboard">Skorboard</a>: a courtside basketball scoreboard on your phone.</li>
+      <li><a href="https://github.com/Cafu1107/sunseat">Sunseat</a>: which car seat will the sun hit?</li>
+      <li><a href="https://github.com/Cafu1107/komponent-depo">Komponent Depo</a>: inventory for electronic parts.</li>
+      <li><a href="https://github.com/Cafu1107/DeleteSpace">DeleteSpace</a>: strip spaces from a text file.</li>
+      <li><a href="https://github.com/Cafu1107/itumtal">İTÜ MTAL</a>: school website with visit booking.</li>
+      <li><a href="https://github.com/Cafu1107/Rebornix">Rebornix</a>: back up before a Windows reinstall, restore after.</li>
+    </ul>
+  </div>
+</noscript>
+
+<script>
+(() => {
+  'use strict';
+  const GH = 'https://github.com/Cafu1107/';
+  // x/y = position in the room (percent of the picture); order here = left-to-right on screen
+  const PROJECTS = [
+    { id: 'kadraj', name: 'Kadraj', mono: 'KA', c: '#ff5a5f', x: 20, y: 55, tilt: -6,
+      site: 'https://cafu1107.github.io/kadraj/', dl: GH + 'kadraj/releases/latest', repo: 'kadraj', shot: 'kadraj',
+      tags: ['C#', '.NET 9', 'WPF', 'C++', 'Media Foundation', 'ONNX Runtime'],
+      tr: { tag: 'Telefonunu Windows webcam\'ine çevir', desc: 'Yapay zekâ ile arka plan bulanıklaştırma ve değiştirme, filtreler, çerçeveler ve isim etiketi. Telefona uygulama kurmak yok: QR kodu okut, Zoom, Teams, Discord ve Meet\'te kamera olarak görünsün.' },
+      en: { tag: 'Turn your phone into a Windows webcam', desc: 'AI background blur and replacement, filters, frames and a name tag. No phone app: scan a QR code and it shows up as a camera in Zoom, Teams, Discord and Meet.' } },
+    { id: 'openglide', name: 'OpenGlide', mono: 'OG', c: '#39d98a', x: 26, y: 35, tilt: 5,
+      site: 'https://cafu1107.github.io/openglide/', repo: 'openglide', shot: 'openglide',
+      tags: ['TypeScript', 'React', 'WebHID', 'HID++'],
+      tr: { tag: 'Oyun fareleri için tarayıcı paneli', desc: '40\'tan fazla markada DPI, polling rate, sensör, tuş ve RGB ayarlarını WebHID ile doğrudan fareye yazar. Üretici programı, hesap veya veri toplama yok.' },
+      en: { tag: 'A browser control panel for gaming mice', desc: 'DPI, polling rate, sensor, buttons and RGB over WebHID for 40+ brands, with no vendor bloatware, account or telemetry.' } },
+    { id: 'wifi', name: 'Wifi', mono: 'WF', c: '#5ccff2', x: 27, y: 71, tilt: 4, repo: 'Wifi', mock: 'wifi',
+      tags: ['Python', 'Windows'],
+      tr: { tag: 'Kayıtlı Wi-Fi şifrelerini göster', desc: 'Bilgisayarında kayıtlı Wi-Fi ağlarını ve şifrelerini listeler. Her Windows dilinde çalışır, ek kütüphane istemez.' },
+      en: { tag: 'Show your saved Wi-Fi passwords', desc: 'Lists the Wi-Fi networks and passwords saved on your Windows PC. Works in every Windows language and needs no extra libraries.' } },
+    { id: 'pota', name: 'Pota', mono: 'PO', c: '#ff8a2a', x: 34, y: 49, tilt: -4,
+      site: 'https://cafu1107.github.io/pota/', repo: 'pota', shot: 'pota',
+      tags: ['TypeScript', 'React', 'Vite', 'TanStack Query', 'Cloudflare Workers', 'D1', 'PWA'],
+      tr: { tag: '18 ligden canlı basketbol skorları', desc: 'Basketbol Süper Ligi ve EuroLeague\'den NBA\'e 18 ligin canlı skorları ve istatistikleri: box score, maç akışı, şut haritası, geçmiş maçlar, maç özetleri, puan durumu ve haberler. Türkçe ve İngilizce; reklam ve bahis oranı yok.' },
+      en: { tag: 'Live basketball scores from 18 leagues', desc: 'Live scores and stats from the Turkish Super League and EuroLeague to the NBA: box scores, play-by-play, shot charts, head to head, highlights, standings and news, in Turkish and English. No ads and no betting odds.' } },
+    { id: 'skorboard', name: 'Skorboard', mono: 'SK', c: '#2ec4b6', x: 38, y: 27, tilt: 6,
+      site: 'https://cafu1107.github.io/skorboard/', repo: 'skorboard', shot: 'skorboard',
+      tags: ['HTML', 'CSS', 'JavaScript', { tr: 'Tek dosya', en: 'Single file' }],
+      tr: { tag: 'Sahada telefondan skorbord', desc: 'Basketbol maçını telefondan yönet: oyun saati, hücum süresi, faul, mola ve oyuncu istatistikleri, üçlükte 3D animasyon. Tek HTML dosyası, kurulum yok.' },
+      en: { tag: 'A courtside scoreboard on your phone', desc: 'Run a basketball game from your phone: game clock, shot clock, fouls, timeouts, player stats and a 3D animation for threes. One HTML file, nothing to install.' } },
+    { id: 'sunseat', name: 'Sunseat', mono: 'SU', c: '#ffd23f', x: 62, y: 27, tilt: -5,
+      site: 'https://cafu1107.github.io/sunseat/', repo: 'sunseat', shot: 'sunseat',
+      tags: ['JavaScript', 'Leaflet', 'OSRM', 'Open-Meteo', 'PWA'],
+      tr: { tag: 'Güneş hangi koltuğa vuracak?', desc: 'Rotanı, çıkış saatini ve arabanı seç; her koltuğa dakika dakika ne kadar güneş geldiğini gör. En iyi çıkış saati, göz kamaşması uyarısı, kabin sıcaklığı ve hangi yöne park etmen gerektiğini söyleyen park modu var.' },
+      en: { tag: 'Which car seat will the sun hit?', desc: 'Pick a route, a departure time and your car, and see minute by minute how much sun every seat gets, with the best time to leave, glare warnings, cabin temperature and a park mode that tells you which way to face.' } },
+    { id: 'komponent-depo', name: 'Komponent Depo', mono: 'KD', c: '#ff9ec0', x: 66, y: 49, tilt: 4,
+      site: 'https://cafu1107.github.io/komponent-depo/', repo: 'komponent-depo', shot: 'komponent-depo',
+      tags: ['JavaScript', 'HTML', 'localStorage', 'EN · TR · DE'],
+      tr: { tag: 'Elektronik parça envanteri', desc: 'Elektronik parçalar için stok uygulaması: otomatik fotoğraf arama, fotoğraf düzenleyici, alışveriş listesi ve stok geçmişi. Türkçe, İngilizce ve Almanca; bağımlılığı olmayan tek bir HTML dosyası.' },
+      en: { tag: 'Inventory for electronic parts', desc: 'Inventory app for electronic parts with automatic photo search, a photo editor, a shopping list and stock history. English, Turkish and German in a single HTML file with zero dependencies.' } },
+    { id: 'deletespace', name: 'DeleteSpace', mono: 'DS', c: '#d8d2c4', x: 73, y: 71, tilt: -4, repo: 'DeleteSpace', mock: 'deletespace',
+      tags: ['Python', 'CLI'],
+      tr: { tag: 'Metindeki boşlukları sil', desc: 'Bir metin dosyasındaki boşlukları ya da bütün boşluk karakterlerini silen küçük bir Python komut satırı aracı.' },
+      en: { tag: 'Strip spaces from a text file', desc: 'A tiny Python command-line tool that removes the spaces, or all whitespace, from a text file.' } },
+    { id: 'itumtal', name: 'İTÜ MTAL', mono: 'İT', c: '#4a74ff', on: '#fff', x: 74, y: 35, tilt: 5,
+      site: 'https://cafu1107.github.io/itumtal/', repo: 'itumtal', shot: 'itumtal',
+      tags: ['JavaScript', 'HTML', 'CSS'],
+      tr: { tag: 'Okul tanıtım ve ziyaret sitesi', desc: 'İTÜ Mesleki ve Teknik Anadolu Lisesi için tanıtım sitesi: okul ziyareti başvurusu, katılım teyidi ve rehberlik paneli.' },
+      en: { tag: 'School website with visit booking', desc: 'Website for İTÜ Vocational and Technical High School: visit applications, attendance confirmation and a counselling panel.' } },
+    { id: 'rebornix', name: 'Rebornix', mono: 'RX', c: '#9b6bff', on: '#fff', x: 80, y: 55, tilt: -6,
+      dl: GH + 'Rebornix/releases/latest', repo: 'Rebornix', mock: 'rebornix',
+      tags: ['C#', '.NET 8', 'WPF', 'winget'],
+      tr: { tag: 'Formattan önce yedekle, sonra geri kur', desc: 'Format atmadan önce her şeyi yedekler, formattan sonra tek tıkla geri kurar: sürücüler, Wi-Fi şifreleri (AES-256), winget ile programlar, oyun kayıtları ve Windows ayarları. Kurulum gerektirmeyen tek bir .exe; Türkçe, İngilizce ve Almanca.' },
+      en: { tag: 'Back up before a reinstall, restore after', desc: 'Back up everything before reinstalling Windows, then restore it in one click: drivers, Wi-Fi passwords (AES-256), apps via winget, game saves and Windows settings. A portable single .exe in English, Turkish and German.' } },
+  ];
+
+  const T = {
+    tr: {
+      title: 'Cafu\'nun Odası', brandSub: 'projeler', list: 'Liste', mute: 'Sesi kapat', unmute: 'Sesi aç',
+      roomAlt: 'Ağaç evin içinde sıcak bir oyun odası: kitap rafları, yuvarlak pencere, minder ve ahşap zemin.',
+      intro: 'Selam! Ben Piko. Bu odadaki her kartuş Cafu\'nun bir projesi. Birini seç, ben çalıştırayım.',
+      ooh: p => 'Ooh, ' + p.name + '! ' + p.tr.tag + '.',
+      loading: p => p.name + ' yükleniyor…',
+      here: p => 'İşte ' + p.name + '! ‹ › ile diğerlerine geç, Esc ile çıkar.',
+      hereNarrow: p => 'İşte ' + p.name + '!',
+      back: 'Geri yerine! Başka hangisine bakalım?',
+      idle: p => 'Hey… ' + p.name + ' kartuşunu denedin mi? ' + p.tr.tag + '.',
+      poke: i => T.tr.pokes[i % T.tr.pokes.length],
+      all: 'Hepsini gördün! Bir yıldız da GitHub\'a bırakırsan Cafu çok sevinir.',
+      pokes: ['Hihi, gıdıklanıyorum!', 'Bip bop! Bir kartuş seçmeye ne dersin?', 'Ekranıma parmak izi bırakma!', 'Antenim çekmiyor… şaka şaka.', 'Bana kartuş tak, sana proje göstereyim.'],
+      hintKeys: '<kbd>←</kbd> <kbd>→</kbd> seç · <kbd>Enter</kbd> tak · <kbd>Esc</kbd> çıkar',
+      hintTouch: 'Bir kartuşa dokun, Piko taksın.',
+      seen: (n, t) => '★ <b>' + n + '</b>/' + t,
+      site: 'Siteye git', dl: 'İndir', code: 'Kodu gör', eject: 'Çıkar', mockNote: 'Temsilî görünüm',
+      prev: 'Önceki proje', next: 'Sonraki proje', close: 'Kartuşu çıkar',
+      shotAlt: p => p.name + ' sitesinin ana sayfası',
+      credit: 'Oda görseli yapay zekâ ile üretildi · Piko kodla çizildi',
+      cartLabel: p => p.name + ': ' + p.tr.tag,
+      aTitle: 'Merhaba, ben Cafu',
+      aLede: 'Webcam, mouse, format ve elektronik atölyesi için; şişkin, sürekli arka planda çalışan programların yerini alan sade ve açık kaynak araçlar geliştiriyorum.',
+      aBody: 'Bu odadaki her kartuş gerçek bir proje: çoğunun canlı sitesi var, hepsinin kodu GitHub\'da açık. Piko\'ya tak, bak, beğendiysen bir yıldız bırak.',
+      fProjects: 'açık proje', fSites: 'canlı site', fLangs: 'Windows uygulaması',
+      aList: 'Tüm projeler', lTitle: 'Tüm projeler',
+      lLede: 'Oyun oynamadan hepsine bakmak istersen: isme tıklarsan Piko o kartuşu takar.',
+      aCredit: 'Oda görseli Higgsfield ile yapay zekâya çizdirildi. Piko, kartuşlar ve sesler tarayıcıda kodla üretiliyor.',
+    },
+    en: {
+      title: 'Cafu\'s Room', brandSub: 'projects', list: 'List', mute: 'Mute sound', unmute: 'Turn sound on',
+      roomAlt: 'A cosy game room inside a treehouse: bookshelves, a round window, a floor cushion and wooden planks.',
+      intro: 'Hi! I\'m Piko. Every cartridge in this room is one of Cafu\'s projects. Pick one and I\'ll run it.',
+      ooh: p => 'Ooh, ' + p.name + '! ' + p.en.tag + '.',
+      loading: p => 'Loading ' + p.name + '…',
+      here: p => 'Here\'s ' + p.name + '! Use ‹ › to flip through the rest, Esc to eject.',
+      hereNarrow: p => 'Here\'s ' + p.name + '!',
+      back: 'Back it goes! Which one next?',
+      idle: p => 'Psst… have you tried ' + p.name + '? ' + p.en.tag + '.',
+      poke: i => T.en.pokes[i % T.en.pokes.length],
+      all: 'You\'ve seen them all! A star on GitHub would make Cafu\'s day.',
+      pokes: ['Hehe, that tickles!', 'Beep boop! How about picking a cartridge?', 'No fingerprints on my screen, please!', 'My antenna has no signal… just kidding.', 'Plug in a cartridge and I\'ll show you a project.'],
+      hintKeys: '<kbd>←</kbd> <kbd>→</kbd> pick · <kbd>Enter</kbd> insert · <kbd>Esc</kbd> eject',
+      hintTouch: 'Tap a cartridge and Piko will plug it in.',
+      seen: (n, t) => '★ <b>' + n + '</b>/' + t,
+      site: 'Open site', dl: 'Download', code: 'View code', eject: 'Eject', mockNote: 'Illustration',
+      prev: 'Previous project', next: 'Next project', close: 'Eject cartridge',
+      shotAlt: p => 'Home page of ' + p.name,
+      credit: 'Room picture made with AI · Piko drawn in code',
+      cartLabel: p => p.name + ': ' + p.en.tag,
+      aTitle: 'Hi, I\'m Cafu',
+      aLede: 'I build small, focused, open-source tools that replace bloated software: for webcams, gaming mice, Windows reinstalls and electronics workbenches.',
+      aBody: 'Every cartridge in this room is a real project. Most have a live site and all of the code is on GitHub. Plug one into Piko, have a look, and leave a star if you like it.',
+      fProjects: 'public projects', fSites: 'live sites', fLangs: 'Windows apps',
+      aList: 'All projects', lTitle: 'All projects',
+      lLede: 'Want to skip the game? Here they all are. Click a name and Piko plugs that cartridge in.',
+      aCredit: 'The room picture was drawn by AI with Higgsfield. Piko, the cartridges and the sounds are made in code, in your browser.',
+    },
+  };
+
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+  };
+  let lang = store.get('piko-lang') || ((navigator.language || 'en').toLowerCase().startsWith('tr') ? 'tr' : 'en');
+  let muted = store.get('piko-mute') === '1';
+  const seen = new Set((store.get('piko-seen') || '').split(',').filter(id => PROJECTS.some(p => p.id === id)));
+  const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const coarse = window.matchMedia('(hover: none)').matches;
+
+  const $ = id => document.getElementById(id);
+  const root = document.documentElement;
+  const scene = $('scene'), piko = $('piko'), cartsEl = $('carts'), panel = $('panel');
+  const dlgText = $('dlgText'), dlgLive = $('dlgLive'), dlgHint = $('dlgHint');
+  const slotCart = $('slotCart');
+  const wait = ms => new Promise(r => setTimeout(r, rm ? 0 : ms));
+  const L = () => T[lang];
+  const txt = v => (typeof v === 'string' ? v : v[lang]);
+  const modalOpen = () => !!document.querySelector('dialog[open]');
+
+  // ---------- sound: tiny synth, no audio files ----------
+  let ac = null;
+  function actx() {
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+    if (ac.state === 'suspended') ac.resume().catch(() => {});
+    return ac;
+  }
+  function tone(f, d, o = {}) {
+    if (muted) return; const a = actx(); if (!a || a.state !== 'running') return;
+    const t = a.currentTime + (o.delay || 0);
+    const osc = a.createOscillator(), g = a.createGain();
+    osc.type = o.type || 'square';
+    osc.frequency.setValueAtTime(f, t);
+    if (o.slide) osc.frequency.exponentialRampToValueAtTime(Math.max(40, f + o.slide), t + d);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(o.vol || 0.05, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    osc.connect(g).connect(a.destination);
+    osc.start(t); osc.stop(t + d + 0.03);
+  }
+  function noise(d, vol, delay = 0, cutoff = 600) {
+    if (muted) return; const a = actx(); if (!a || a.state !== 'running') return;
+    const t = a.currentTime + delay;
+    const buf = a.createBuffer(1, Math.ceil(a.sampleRate * d), a.sampleRate);
+    const ch = buf.getChannelData(0);
+    for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / ch.length);
+    const src = a.createBufferSource(), hp = a.createBiquadFilter(), g = a.createGain();
+    hp.type = 'highpass'; hp.frequency.value = cutoff; g.gain.value = vol;
+    src.buffer = buf; src.connect(hp).connect(g).connect(a.destination); src.start(t);
+  }
+  const sfx = {
+    select: () => tone(740, 0.05, { vol: 0.035 }),
+    whoosh: () => noise(0.32, 0.05, 0, 1400),
+    insert: () => { noise(0.05, 0.16, 0, 300); tone(150, 0.14, { type: 'triangle', vol: 0.14, slide: -70, delay: 0.015 }); },
+    boot: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.11, { vol: 0.045, delay: 0.09 * i })),
+    eject: () => { tone(620, 0.16, { vol: 0.045, slide: -380 }); noise(0.04, 0.1, 0.1, 500); },
+    type: () => tone(980 + Math.random() * 260, 0.018, { vol: 0.012 }),
+    boop: () => { tone(880, 0.07, { vol: 0.05, type: 'triangle' }); tone(1320, 0.09, { vol: 0.05, type: 'triangle', delay: 0.07 }); },
+    fanfare: () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, 0.12, { vol: 0.045, delay: 0.1 * i })),
+    page: () => tone(520, 0.05, { vol: 0.03 }),
+  };
+  const unlock = () => actx();
+  window.addEventListener('pointerdown', unlock, { passive: true });
+  window.addEventListener('keydown', unlock);
+
+  // ---------- dialog with typewriter ----------
+  let typing = 0, lastSay = null;
+  function say(key, p) {
+    lastSay = { key, p };
+    const v = L()[key];
+    const text = typeof v === 'function' ? v(p) : v;
+    dlgLive.textContent = text;
+    const run = ++typing;
+    if (rm) { dlgText.textContent = text; return; }
+    let i = 0;
+    dlgText.textContent = '';
+    const caret = document.createElement('span'); caret.className = 'caret'; caret.textContent = '▌';
+    const span = document.createElement('span');
+    dlgText.append(span, caret);
+    (function step() {
+      if (run !== typing) return;
+      i = Math.min(text.length, i + 2);
+      span.textContent = text.slice(0, i);
+      if (i % 4 === 0) sfx.type();
+      if (i < text.length) setTimeout(step, 22); else setTimeout(() => { if (run === typing) caret.remove(); }, 900);
+    })();
+  }
+  function hint() {
+    dlgHint.innerHTML = coarse || narrow ? L().hintTouch : L().hintKeys;
+    $('dlgSeen').innerHTML = seen.size ? L().seen(seen.size, PROJECTS.length) : '';
+  }
+
+  // ---------- layout: the picture always covers the screen ----------
+  let narrow = false;
+  function layout() {
+    const vw = innerWidth, vh = innerHeight;
+    narrow = vw < 760;
+    root.classList.toggle('narrow', narrow);
+    let sw, sh, sx, sy;
+    if (narrow) {
+      sh = vh * 0.74; sw = sh * 16 / 9;
+      if (sw < vw) { sw = vw; sh = sw * 9 / 16; }
+      sx = (vw - sw) / 2; sy = 0;
+    } else {
+      sw = Math.max(vw, vh * 16 / 9); sh = sw * 9 / 16;
+      sx = (vw - sw) / 2; sy = vh - sh; // keep the floor in view, crop the ceiling
+    }
+    scene.style.setProperty('--sw', sw + 'px'); scene.style.setProperty('--sh', sh + 'px');
+    scene.style.setProperty('--sx', sx + 'px'); scene.style.setProperty('--sy', sy + 'px');
+    root.style.setProperty('--sh', sh + 'px');
+    root.style.setProperty('--dlg-h', $('dialog').offsetHeight + 'px');
+    hint();
+  }
+
+  // ---------- cartridges ----------
+  const carts = PROJECTS.map((p, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'cart' + (seen.has(p.id) ? ' seen' : ''); b.id = 'cart-' + p.id;
+    // shrink the label text so the longest word of the name fits on the cartridge
+    const longest = Math.max(...p.name.split(' ').map(w => w.length));
+    const nf = Math.min(1.15, 5.6 / (longest * 0.68)).toFixed(2);
+    b.style.cssText = `--x:${p.x};--y:${p.y};--c:${p.c};--tilt:${p.tilt}deg;--d:${(-i * 0.37).toFixed(2)}s;--nf:${nf}` + (p.on ? `;--on:${p.on}` : '');
+    b.innerHTML = '<span class="cart__float"><span class="cart__shell"><span class="cart__grip"></span>' +
+      '<span class="cart__label"><span class="cart__mono">' + p.mono + '</span><span class="cart__name">' + p.name + '</span></span>' +
+      '<span class="cart__seen" aria-hidden="true"></span></span></span>';
+    b.addEventListener('pointerenter', () => select(i, false));
+    b.addEventListener('focus', () => select(i, false));
+    b.addEventListener('click', () => insert(i));
+    cartsEl.appendChild(b);
+    return b;
+  });
+  function labelCarts() { carts.forEach((b, i) => b.setAttribute('aria-label', L().cartLabel(PROJECTS[i]))); }
+
+  let sel = -1, current = null, busy = false;
+  function select(i, focus) {
+    if (i === sel) return;
+    sel = i;
+    carts.forEach((b, j) => b.classList.toggle('is-sel', j === i));
+    if (focus) carts[i].focus({ preventScroll: true });
+    if (narrow) carts[i].scrollIntoView({ inline: 'center', block: 'nearest', behavior: rm ? 'auto' : 'smooth' });
+    sfx.select();
+    if (!busy && current === null) { setFace('ooh'); say('ooh', PROJECTS[i]); }
+    gaze(i);
+  }
+  function gaze(i) {
+    const r = carts[i].getBoundingClientRect(), pr = piko.getBoundingClientRect();
+    const dx = Math.max(-1, Math.min(1, (r.left + r.width / 2 - (pr.left + pr.width / 2)) / (pr.width * 2)));
+    const dy = Math.max(-1, Math.min(1, (r.top + r.height / 2 - (pr.top + pr.height * .35)) / (pr.height * 1.5)));
+    $('face').style.transform = `translate(${(dx * 6).toFixed(1)}px, ${(dy * 4).toFixed(1)}px)`;
+  }
+  function setFace(f) { piko.dataset.face = f; }
+
+  // map a point in Piko's 220x300 drawing to the screen
+  function pt(x, y) {
+    const r = piko.getBoundingClientRect(), s = r.width / 220;
+    return { x: r.left + x * s, y: r.top + y * s, s };
+  }
+
+  async function insert(i) {
+    if (busy) return;
+    if (current === i) { openPanel(i); return; }
+    if (current !== null) await eject(true);
+    busy = true; current = i; activity();
+    const p = PROJECTS[i], cart = carts[i];
+    select(i, false);
+    say('loading', p);
+    setFace('ooh'); piko.classList.add('busy');
+
+    const from = cart.getBoundingClientRect();
+    const a = pt(72, 6 - 50);              // cartridge hovering just above the slot
+    const sc = (76 * a.s) / from.width;
+    const fly = makeFly(cart, from);
+    cart.classList.add('is-out');
+    sfx.whoosh();
+    if (!rm) {
+      const dx = a.x - from.left, dy = a.y - from.top;
+      await fly.animate([
+        { transform: 'translate(0,0) rotate(0deg) scale(1)' },
+        { transform: `translate(${dx * .5}px, ${Math.min(dy, 0) - 90}px) rotate(-14deg) scale(${(1 + sc) / 2})`, offset: .55 },
+        { transform: `translate(${dx}px, ${dy}px) rotate(0deg) scale(${sc})` },
+      ], { duration: 560, easing: 'cubic-bezier(.3,.7,.35,1)', fill: 'forwards' }).finished;
+    }
+    fly.remove();
+
+    $('slotLabel').setAttribute('fill', p.c);
+    slotCart.setAttribute('opacity', '1');
+    if (!rm) await slotCart.animate([{ transform: 'translateY(-50px)' }, { transform: 'translateY(0)' }],
+      { duration: 210, easing: 'cubic-bezier(.55,0,.8,.2)', fill: 'forwards' }).finished;
+    sfx.insert();
+    if (!rm) piko.animate([{ scale: '1 1' }, { scale: '1.03 .95' }, { scale: '1 1' }], { duration: 260, easing: 'ease-out' });
+
+    $('appBg').setAttribute('fill', p.c);
+    $('appMono').textContent = p.mono; $('appName').textContent = p.name;
+    $('appMono').setAttribute('fill', p.on || '#2b1a10'); $('appName').setAttribute('fill', p.on || '#2b1a10');
+    piko.dataset.app = 'on';
+    restartAnim(piko.querySelector('.app__scan')); restartAnim(piko.querySelector('.app__content'));
+    sfx.boot();
+    await wait(650);
+    piko.classList.remove('busy');
+    const first = !seen.has(p.id);
+    seen.add(p.id); cart.classList.add('seen'); store.set('piko-seen', [...seen].join(','));
+    openPanel(i);
+    if (first && seen.size === PROJECTS.length) { say('all'); sfx.fanfare(); }
+    else say(narrow ? 'hereNarrow' : 'here', p);
+    hint();
+    try { history.replaceState(null, '', '#' + p.id); } catch (e) {}
+    busy = false;
+  }
+
+  async function eject(chained) {
+    if (current === null || (busy && !chained)) return;
+    busy = true; activity();
+    const i = current, cart = carts[i];
+    const hadFocusInPanel = panel.contains(document.activeElement);
+    closePanel();
+    piko.dataset.app = 'off'; setFace('ooh');
+    sfx.eject();
+    if (!rm) await slotCart.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-50px)' }],
+      { duration: 190, easing: 'cubic-bezier(.2,.8,.4,1)', fill: 'forwards' }).finished;
+    slotCart.setAttribute('opacity', '0');
+
+    const to = cart.getBoundingClientRect();
+    const a = pt(72, 6 - 50);
+    const sc = (76 * a.s) / to.width;
+    cart.style.visibility = 'hidden';
+    cart.classList.remove('is-out');
+    if (!rm) {
+      const fly = makeFly(cart, to);
+      const dx = a.x - to.left, dy = a.y - to.top;
+      await fly.animate([
+        { transform: `translate(${dx}px, ${dy}px) scale(${sc})` },
+        { transform: `translate(${dx * .5}px, ${Math.min(dy, 0) - 70}px) rotate(10deg) scale(${(1 + sc) / 2})`, offset: .45 },
+        { transform: 'translate(0,0) scale(1)' },
+      ], { duration: 460, easing: 'cubic-bezier(.3,.7,.35,1)', fill: 'forwards' }).finished;
+      fly.remove();
+    }
+    cart.style.visibility = '';
+    current = null; busy = false;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    if (!chained) {
+      setFace('happy'); say('back');
+      setTimeout(() => { if (current === null) setFace('idle'); }, 900);
+      if (hadFocusInPanel || document.activeElement === document.body) cart.focus({ preventScroll: true });
+    }
+  }
+  const step = d => { if (current !== null && !busy) { sfx.page(); insert((current + d + PROJECTS.length) % PROJECTS.length); } };
+
+  function makeFly(cart, rect) {
+    const fly = cart.cloneNode(true);
+    fly.removeAttribute('id'); fly.classList.remove('is-sel', 'is-out', 'seen'); fly.classList.add('fly');
+    fly.setAttribute('aria-hidden', 'true'); fly.tabIndex = -1;
+    Object.assign(fly.style, { position: 'fixed', left: rect.left + 'px', top: rect.top + 'px', width: rect.width + 'px', height: rect.height + 'px', translate: 'none', flex: 'none' });
+    document.body.appendChild(fly);
+    return fly;
+  }
+  function restartAnim(el) { el.style.animation = 'none'; void el.getBoundingClientRect(); el.style.animation = ''; }
+
+  // ---------- project card ----------
+  function openPanel(i) {
+    const p = PROJECTS[i], l = L();
+    panel.style.setProperty('--c', p.c);
+    if (p.on) panel.style.setProperty('--on', p.on); else panel.style.removeProperty('--on');
+    const shot = $('pShot');
+    if (p.shot) {
+      shot.innerHTML = '<img alt="" src="gorseller/' + p.shot + '.webp" width="1000" height="625">';
+      shot.querySelector('img').alt = l.shotAlt(p);
+    } else {
+      shot.innerHTML = mockHTML(p.mock) + '<figcaption>' + l.mockNote + '</figcaption>';
+    }
+    $('pCount').textContent = (i + 1) + ' / ' + PROJECTS.length;
+    $('pBadge').textContent = p.mono;
+    $('pTitle').textContent = p.name;
+    $('pTag').textContent = p[lang].tag;
+    $('pDesc').textContent = p[lang].desc;
+    $('pTags').innerHTML = p.tags.map(t => '<li>' + txt(t) + '</li>').join('');
+    const acts = [];
+    if (p.site) acts.push('<a class="btn btn--main" href="' + p.site + '" target="_blank" rel="noopener">' + l.site + ' ↗</a>');
+    if (p.dl) acts.push('<a class="btn' + (p.site ? '' : ' btn--main') + '" href="' + p.dl + '" target="_blank" rel="noopener">' + l.dl + ' ↗</a>');
+    acts.push('<a class="btn' + (p.site || p.dl ? '' : ' btn--main') + '" href="' + GH + p.repo + '" target="_blank" rel="noopener">' + l.code + ' ↗</a>');
+    acts.push('<button type="button" class="btn" id="ejectBtn">' + l.eject + (narrow ? '' : ' <kbd>Esc</kbd>') + '</button>');
+    $('pActions').innerHTML = acts.join('');
+    $('ejectBtn').addEventListener('click', () => eject(false));
+    const wasHidden = panel.hidden;
+    panel.hidden = false;
+    if (wasHidden) { panel.classList.remove('is-open'); void panel.offsetWidth; panel.classList.add('is-open'); }
+    panel.scrollTop = 0;
+    if (!panel.contains(document.activeElement)) $('pTitle').focus({ preventScroll: true });
+  }
+  function closePanel() { panel.hidden = true; panel.classList.remove('is-open'); }
+  $('pPrev').addEventListener('click', () => step(-1));
+  $('pNext').addEventListener('click', () => step(1));
+  $('pClose').addEventListener('click', () => eject(false));
+
+  function mockHTML(kind) {
+    const tr = lang === 'tr';
+    if (kind === 'rebornix') {
+      const items = tr ? ['Sürücüler', 'Wi-Fi profilleri', 'Programlar (winget)', 'Oyun kayıtları', 'Windows ayarları']
+                       : ['Drivers', 'Wi-Fi profiles', 'Apps (winget)', 'Game saves', 'Windows settings'];
+      return '<div class="mock"><div class="mock__win"><div class="mock__bar">Rebornix</div><ul>' +
+        items.map(s => '<li>' + s + '</li>').join('') + '</ul><span class="mock__go">' + (tr ? 'Yedekle' : 'Back up') + '</span></div></div>';
+    }
+    if (kind === 'wifi') {
+      return '<div class="mock"><div class="mock__term"><b>&gt; python wifi.py</b>\n\n' +
+        (tr ? 'Ağ adı          Şifre' : 'Network         Password') + '\n' +
+        'Ev_Agi_5G       ••••••••••\nKafe_Misafir    ••••••••\nOkul-WiFi       •••••••••••</div></div>';
+    }
+    return '<div class="mock"><div class="mock__term"><b>&gt; python deletespace.py not.txt</b>\n\n' +
+      (tr ? 'önce : ' : 'before: ') + '"mer haba  dün ya"\n' + (tr ? 'sonra: ' : 'after : ') + '"merhabadünya"</div></div>';
+  }
+
+  // ---------- about + list ----------
+  const about = $('about'), list = $('list');
+  function openModal(d) { if (typeof d.showModal === 'function') { d.showModal(); } else { d.setAttribute('open', ''); } sfx.page(); }
+  $('brand').addEventListener('click', () => openModal(about));
+  $('listBtn').addEventListener('click', () => openModal(list));
+  $('aList').addEventListener('click', () => { about.close(); openModal(list); });
+  [about, list].forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+  function renderList() {
+    const l = L();
+    $('plist').innerHTML = PROJECTS.map((p, i) => {
+      const links = [];
+      if (p.site) links.push('<a href="' + p.site + '" target="_blank" rel="noopener">' + l.site + ' ↗</a>');
+      if (p.dl) links.push('<a href="' + p.dl + '" target="_blank" rel="noopener">' + l.dl + ' ↗</a>');
+      links.push('<a href="' + GH + p.repo + '" target="_blank" rel="noopener">' + l.code + ' ↗</a>');
+      return '<li><span class="badge" style="--c:' + p.c + (p.on ? ';--on:' + p.on : '') + '" aria-hidden="true">' + p.mono + '</span>' +
+        '<span style="min-width:0"><button type="button" class="plist__name" data-i="' + i + '">' + p.name + (seen.has(p.id) ? ' ★' : '') + '</button>' +
+        '<span class="plist__tag">' + p[lang].tag + '</span></span><span class="plist__links">' + links.join('') + '</span></li>';
+    }).join('');
+  }
+  $('plist').addEventListener('click', e => {
+    const b = e.target.closest('.plist__name'); if (!b) return;
+    list.close(); insert(Number(b.dataset.i));
+  });
+  list.addEventListener('close', () => {}); // keeps the native Esc behaviour inside the sheet
+  $('listBtn').addEventListener('click', renderList);
+  $('aList').addEventListener('click', renderList);
+
+  // ---------- Piko himself ----------
+  let pokeN = 0;
+  function poke() {
+    if (busy) return;
+    activity();
+    say('poke', pokeN++);
+    sfx.boop();
+    if (current === null) { setFace('happy'); setTimeout(() => { if (current === null && !busy) setFace('idle'); }, 1100); }
+    if (!rm) piko.animate([{ translate: '-50% 0' }, { translate: '-50% -14px' }, { translate: '-50% 0' }], { duration: 360, easing: 'cubic-bezier(.3,.7,.3,1)' });
+  }
+  piko.addEventListener('click', poke);
+  piko.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); poke(); } });
+
+  // after a quiet spell, Piko suggests a project you have not opened yet
+  let idleTimer = 0;
+  function activity() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      if (busy || current !== null || modalOpen() || document.hidden) return activity();
+      const fresh = PROJECTS.map((p, i) => i).filter(i => !seen.has(PROJECTS[i].id));
+      if (!fresh.length) return;
+      const i = fresh[Math.floor(Math.random() * fresh.length)];
+      sel = -1; select(i, false); say('idle', PROJECTS[i]);
+      activity();
+    }, 16000);
+  }
+  ['pointermove', 'keydown', 'pointerdown', 'wheel'].forEach(ev => window.addEventListener(ev, () => { if (!busy) activity(); }, { passive: true }));
+
+  // ---------- language + sound ----------
+  function applyLang() {
+    const l = L();
+    root.lang = lang;
+    document.title = l.title;
+    document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+    $('brandSub').textContent = l.brandSub;
+    $('listText').textContent = l.list; $('listBtn').setAttribute('aria-label', l.lTitle);
+    $('credit').textContent = l.credit;
+    $('sceneBg').setAttribute('aria-label', l.roomAlt);
+    $('pPrev').setAttribute('aria-label', l.prev); $('pNext').setAttribute('aria-label', l.next); $('pClose').setAttribute('aria-label', l.close);
+    ['aTitle', 'aLede', 'aBody', 'fProjects', 'fSites', 'fLangs', 'aList', 'lTitle', 'lLede', 'aCredit'].forEach(k => { $(k).textContent = l[k]; });
+    $('aClose').setAttribute('aria-label', lang === 'tr' ? 'Kapat' : 'Close'); $('lClose').setAttribute('aria-label', lang === 'tr' ? 'Kapat' : 'Close');
+    labelCarts(); hint(); applyMute(); renderList();
+    if (lastSay) say(lastSay.key, lastSay.p);
+    if (current !== null && !panel.hidden) openPanel(current);
+  }
+  function applyMute() {
+    $('mute').setAttribute('aria-pressed', String(muted));
+    $('muteLabel').textContent = muted ? L().unmute : L().mute;
+    $('muteWaves').style.display = muted ? 'none' : '';
+    $('muteX').style.display = muted ? '' : 'none';
+  }
+  document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => {
+    lang = b.dataset.lang; store.set('piko-lang', lang); applyLang();
+  }));
+  $('mute').addEventListener('click', () => { muted = !muted; store.set('piko-mute', muted ? '1' : '0'); applyMute(); if (!muted) sfx.select(); });
+
+  // ---------- keyboard ----------
+  document.addEventListener('keydown', e => {
+    if (modalOpen()) return;                       // the sheets handle their own keys (Esc closes them)
+    if (e.key === 'Escape') { if (current !== null) { e.preventDefault(); eject(false); } return; }
+    const arrows = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'];
+    if (arrows.includes(e.key)) {
+      e.preventDefault();
+      const dir = (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : -1;
+      if (current !== null) { step(dir); return; }   // card open: flip to the next project
+      const at = sel < 0 ? (dir > 0 ? -1 : 0) : sel;
+      select((at + dir + PROJECTS.length) % PROJECTS.length, true);
+    } else if (e.key === 'Enter' && sel >= 0 && current === null && document.activeElement === document.body) {
+      e.preventDefault(); insert(sel);
+    }
+  });
+
+  // ---------- idle life: blinking ----------
+  (function blink() {
+    setTimeout(() => {
+      if (piko.dataset.app !== 'on') { piko.classList.add('blink'); setTimeout(() => piko.classList.remove('blink'), 130); }
+      blink();
+    }, 2200 + Math.random() * 3200);
+  })();
+
+  // ---------- start ----------
+  const bg = new Image();
+  bg.onload = bg.onerror = () => scene.classList.add('ready');
+  bg.src = 'gorseller/oda.webp';
+  window.addEventListener('resize', layout);
+  if ('ResizeObserver' in window) new ResizeObserver(() => root.style.setProperty('--dlg-h', $('dialog').offsetHeight + 'px')).observe($('dialog'));
+  layout(); applyLang();
+  say('intro'); activity();
+  if (!rm) { piko.classList.add('wave'); setTimeout(() => piko.classList.remove('wave'), 1700); }
+  const start = PROJECTS.findIndex(p => '#' + p.id === location.hash);
+  if (start >= 0) setTimeout(() => insert(start), rm ? 0 : 900);
+})();
+</script>
+
+</body>
+</html>
